@@ -1,0 +1,10 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // read: ทุกคน (dashboard สาธารณะ)
+    match /{document=**} {
+      allow read: if true;
+      allow write: if true; // ระบบ internal — ล็อก client-side ด้วย sessionStorage
+    }
+  }
+}

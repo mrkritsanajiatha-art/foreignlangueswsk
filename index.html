@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ระบบจัดครูสอนแทน</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+  <div class="loading" id="loading">
+    <div class="loading-card">
+      <div class="spinner"></div>
+      <div id="loadingText">กำลังประมวลผล</div>
+    </div>
+  </div>
+
+  <main class="app-shell">
+    <header class="topbar">
+      <p class="eyebrow">กลุ่มสาระการเรียนรู้ภาษาต่างประเทศ</p>
+      <h1>ระบบบริหารจัดการครูสอนแทนและบันทึกสถิติอัตโนมัติ</h1>
+      <p class="subtitle">โรงเรียนกระทุ่มแบน วิเศษสมุทคุณ</p>
+    </header>
+
+    
+    <!-- Navigation Tabs -->
+    <div class="tab-nav">
+      <button class="tab-btn active" id="tabBtnDashboard">📊 แดชบอร์ดสถิติ</button>
+      <button class="tab-btn" id="tabBtnManage">⚙️ จัดการสอนแทน (แอดมิน)</button>
+    </div>
+
+    <!-- Dashboard Tab -->
+    <div id="tabDashboard" class="tab-pane active">
+      <h2 style="color: var(--primary-dark); margin-bottom: 15px; text-align: center;">🏆 Top 3 ครูสอนแทนสูงสุด ประจำภาคเรียน</h2>
+      <div class="stat-grid" id="dashboardTop"></div>
+      
+      <h2 style="color: var(--primary-dark); margin-bottom: 15px; margin-top: 30px;"><i class="fas fa-list"></i> สถิติคุณครูทั้งหมด</h2>
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>รายชื่อคุณครู</th>
+              <th>ลา (ครั้ง)</th>
+              <th>สอนแทน (คาบ)</th>
+            </tr>
+          </thead>
+          <tbody id="dashboardTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Manage Tab -->
+    <div id="tabManage" class="tab-pane">
+      <!-- Login Section -->
+      <div id="loginSection" class="login-panel panel">
+        <h2>เข้าสู่ระบบ (แอดมิน)</h2>
+        <p class="subtitle" style="margin-bottom: 20px;">เฉพาะผู้ดูแลระบบที่แก้ไขข้อมูลได้</p>
+        <div class="form-grid">
+          <div>
+            <label style="text-align: left;">Username</label>
+            <input type="text" class="field" id="loginUsername" placeholder="กรอก Username">
+          </div>
+          <div>
+            <label style="text-align: left;">Password</label>
+            <input type="password" class="field" id="loginPassword" placeholder="กรอก Password">
+          </div>
+          <button class="btn btn-primary" id="btnLogin" type="button" style="margin-top: 10px;">ล็อกอินเข้าสู่ระบบ</button>
+        </div>
+      </div>
+
+      <!-- Workspace Section (Admin only) -->
+      <div id="workspaceSection" style="display: none;">
+        <div class="admin-actions">
+          <button class="btn btn-light" id="btnLogout" type="button">ออกจากระบบ</button>
+        </div>
+        <div class="workspace">
+
+      <section class="panel">
+        <div class="section-title">
+          <h2>เลือกข้อมูลการลา</h2>
+          <span class="status-pill" id="teacherCount">พร้อมใช้งาน</span>
+        </div>
+
+        <div class="form-grid">
+          <div>
+            <label for="absentTeacher">ชื่อครูที่ลา</label>
+            <select class="field" id="absentTeacher">
+              <option value="">กำลังโหลดรายชื่อ...</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="leaveDay">วันที่ลาเป็นวัน</label>
+            <select class="field" id="leaveDay">
+              <option value="">กำลังโหลดวัน...</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="leaveDate">วันที่ลา</label>
+            <input class="field" id="leaveDate" type="date">
+          </div>
+        </div>
+
+        <div class="button-row">
+          <button class="btn btn-primary" id="searchBtn" type="button">ค้นหาครูสอนแทน</button>
+        </div>
+
+        <div class="alert" id="messageBox"></div>
+
+        <div class="result-area" id="resultArea">
+          <div class="section-title">
+            <h2>เลือกครูผู้ปฏิบัติหน้าที่แทน</h2>
+            <span class="status-pill" id="periodCount">0 คาบ</span>
+          </div>
+          <div class="assignment-list" id="assignmentList"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="capture-wrap">
+        <div class="capture-card">
+          <div id="captureArea">
+            <div class="capture-header">
+              <div>
+                <h2 class="capture-title">บันทึกสรุปการปฏิบัติหน้าที่สอนแทน - กลุ่มสาระภาษาต่างประเทศ</h2>
+                <p class="capture-school">โรงเรียนกระทุ่มแบน วิเศษสมุทคุณ</p>
+              </div>
+              <div class="capture-mark">สอน<br>แทน</div>
+            </div>
+
+            <div class="summary-grid">
+              <div class="summary-item">
+                <div class="summary-label">ครูที่ลา</div>
+                <div class="summary-value" id="summaryTeacher">-</div>
+              </div>
+              <div class="summary-item">
+                <div class="summary-label">วัน</div>
+                <div class="summary-value" id="summaryDay">-</div>
+              </div>
+              <div class="summary-item">
+                <div class="summary-label">วันที่</div>
+                <div class="summary-value" id="summaryDate">-</div>
+              </div>
+            </div>
+
+            <div id="captureContent">
+              <div class="empty-card">เลือกครูที่ลาและวันลา แล้วกดค้นหาครูสอนแทน</div>
+            </div>
+
+            <p class="footer-note" id="captureTimestamp">จัดทำโดยระบบอัตโนมัติ</p>
+          </div>
+        </div>
+
+        <div class="button-row action-buttons">
+          <button class="btn btn-primary" id="captureBtn" type="button" disabled>1. เซฟรูปตารางสรุป</button>
+          <button class="btn btn-success" id="saveBtn" type="button" disabled>2. บันทึกงานและอัปเดตสถิติ</button>
+        </div>
+      </section>
+    </div>
+          </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Modal แสดงรูปหลัง capture — กดค้างเพื่อบันทึกบนมือถือ/Line -->
+  <div id="imageModal" class="image-modal">
+    <div class="image-modal-inner">
+      <p class="image-modal-hint">📱 กดค้างที่รูปเพื่อบันทึกลงเครื่อง</p>
+      <img id="capturedImg" src="" alt="ตารางสรุปการสอนแทน">
+      <div class="image-modal-footer">
+        <a id="capturedDownload" class="btn btn-primary" download style="text-decoration:none;">⬇ ดาวน์โหลด (PC)</a>
+        <button id="btnCloseModal" class="btn btn-light">✕ ปิด</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="./main.js?v=4"></script>
+</body>
+</html>
