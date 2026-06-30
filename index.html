@@ -167,18 +167,31 @@
     </div>
   </main>
 
-  <!-- Modal แสดงรูปหลัง capture — กดค้างเพื่อบันทึกบนมือถือ/Line -->
+  <!-- Modal พรีวิวเต็มจอ ก่อนบันทึกรูป -->
   <div id="imageModal" class="image-modal">
     <div class="image-modal-inner">
-      <p class="image-modal-hint">📱 กดค้างที่รูปเพื่อบันทึกลงเครื่อง</p>
-      <img id="capturedImg" src="" alt="ตารางสรุปการสอนแทน">
+      <div class="image-modal-head">
+        <span class="image-modal-title">✅ พรีวิวรูป — ตรวจก่อนบันทึก</span>
+        <button id="btnCloseModal" class="image-modal-x" type="button" aria-label="ปิด">✕</button>
+      </div>
+
+      <div class="image-modal-steps">
+        <p class="step-line"><b>📱 มือถือ:</b> กดปุ่ม <b>“บันทึก / ส่งเข้า LINE”</b> สีเขียว แล้วเลือก “บันทึกรูปภาพ” หรือส่งเข้า LINE ได้เลย</p>
+        <p class="step-line"><b>💻 คอมพิวเตอร์:</b> กดปุ่ม <b>“ดาวน์โหลดลงเครื่อง”</b> สีน้ำเงิน</p>
+      </div>
+
+      <div class="image-modal-imgwrap">
+        <img id="capturedImg" src="" alt="ตารางสรุปการสอนแทน">
+      </div>
+
       <div class="image-modal-footer">
-        <a id="capturedDownload" class="btn btn-primary" download style="text-decoration:none;">⬇ ดาวน์โหลด (PC)</a>
-        <button id="btnCloseModal" class="btn btn-light">✕ ปิด</button>
+        <button id="btnShareImg" class="btn btn-success btn-big" type="button">📲 บันทึก / ส่งเข้า LINE</button>
+        <a id="capturedDownload" class="btn btn-primary btn-big" download style="text-decoration:none;">⬇️ ดาวน์โหลดลงเครื่อง</a>
+        <button id="btnCloseModal2" class="btn btn-light" type="button">ปิดหน้าต่าง</button>
       </div>
     </div>
   </div>
 
-  <script type="module" src="./main.js?v=4"></script>
+  <script type="module" src="./main.js?v=5"></script>
 </body>
 </html>

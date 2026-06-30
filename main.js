@@ -8,7 +8,8 @@ const state = {
   teachers: [],
   days: [],
   currentResult: null,
-  stats: {}
+  stats: {},
+  captureFile: null
 }
 
 const els = {
@@ -46,7 +47,9 @@ const els = {
   imageModal: document.getElementById('imageModal'),
   capturedImg: document.getElementById('capturedImg'),
   capturedDownload: document.getElementById('capturedDownload'),
-  btnCloseModal: document.getElementById('btnCloseModal')
+  btnCloseModal: document.getElementById('btnCloseModal'),
+  btnCloseModal2: document.getElementById('btnCloseModal2'),
+  btnShareImg: document.getElementById('btnShareImg')
 }
 
 init()
@@ -61,7 +64,14 @@ els.tabBtnManage.addEventListener('click', function () { switchTab('manage') })
 els.btnLogin.addEventListener('click', handleLogin)
 els.btnLogout.addEventListener('click', handleLogout)
 els.btnCloseModal.addEventListener('click', closeImageModal)
+els.btnCloseModal2.addEventListener('click', closeImageModal)
+els.btnShareImg.addEventListener('click', shareImage)
 els.imageModal.addEventListener('click', function (e) { if (e.target === els.imageModal) closeImageModal() })
+
+// ซ่อนปุ่มแชร์บนเบราว์เซอร์ที่ไม่รองรับ Web Share API (เช่น Chrome บน PC)
+if (!(navigator.share && navigator.canShare)) {
+  document.body.classList.add('no-share')
+}
 window.addEventListener('resize', scaleCapturePreview)
 
 function switchTab(tab) {
@@ -405,8 +415,14 @@ function handleCapture() {
     els.capturedDownload.download = filename
     els.imageModal.classList.add('open')
 
+    // เตรียมไฟล์รูปสำหรับปุ่มแชร์ (Web Share API → บันทึกลงคลังภาพ/ส่ง LINE)
+    state.captureFile = null
+    canvas.toBlob(function (blob) {
+      if (blob) state.captureFile = new File([blob], filename, { type: 'image/png' })
+    }, 'image/png', 1.0)
+
     setLoading(false)
-    setMessage('สร้างรูปภาพเรียบร้อยแล้ว กดค้างที่รูปเพื่อบันทึก', 'success')
+    setMessage('สร้างรูปเรียบร้อย — เลือกวิธีบันทึกที่หน้าต่างพรีวิว', 'success')
   }).catch(function (error) {
     els.captureArea.style.zoom = savedZoom
     setLoading(false)
@@ -414,9 +430,26 @@ function handleCapture() {
   })
 }
 
+function shareImage() {
+  const file = state.captureFile
+  if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
+    navigator.share({
+      files: [file],
+      title: 'บันทึกการปฏิบัติหน้าที่สอนแทน',
+      text: 'บันทึกการปฏิบัติหน้าที่สอนแทน - กลุ่มสาระภาษาต่างประเทศ'
+    }).catch(function () {
+      // ผู้ใช้กดยกเลิก share sheet — ไม่ต้องทำอะไร
+    })
+  } else {
+    // เบราว์เซอร์ไม่รองรับการแชร์ไฟล์ → ดาวน์โหลดแทน
+    els.capturedDownload.click()
+  }
+}
+
 function closeImageModal() {
   els.imageModal.classList.remove('open')
   els.capturedImg.src = ''
+  state.captureFile = null
 }
 
 function scaleCapturePreview() {
