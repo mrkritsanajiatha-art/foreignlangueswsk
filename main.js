@@ -30,6 +30,9 @@ const els = {
   absentTeacher: document.getElementById('absentTeacher'),
   leaveDay: document.getElementById('leaveDay'),
   leaveDate: document.getElementById('leaveDate'),
+  leaveType: document.getElementById('leaveType'),
+  leaveTypeOther: document.getElementById('leaveTypeOther'),
+  leaveTypeOtherWrap: document.getElementById('leaveTypeOtherWrap'),
   searchBtn: document.getElementById('searchBtn'),
   saveBtn: document.getElementById('saveBtn'),
   captureBtn: document.getElementById('captureBtn'),
@@ -39,6 +42,7 @@ const els = {
   resultArea: document.getElementById('resultArea'),
   assignmentList: document.getElementById('assignmentList'),
   summaryTeacher: document.getElementById('summaryTeacher'),
+  summaryLeaveType: document.getElementById('summaryLeaveType'),
   summaryDay: document.getElementById('summaryDay'),
   summaryDate: document.getElementById('summaryDate'),
   captureContent: document.getElementById('captureContent'),
@@ -59,6 +63,11 @@ els.captureBtn.addEventListener('click', handleCapture)
 els.absentTeacher.addEventListener('change', updateSummaryFromInputs)
 els.leaveDay.addEventListener('change', updateSummaryFromInputs)
 els.leaveDate.addEventListener('change', updateSummaryFromInputs)
+els.leaveType.addEventListener('change', function () {
+  els.leaveTypeOtherWrap.style.display = els.leaveType.value === 'อื่นๆ' ? '' : 'none'
+  updateSummaryFromInputs()
+})
+els.leaveTypeOther.addEventListener('input', updateSummaryFromInputs)
 els.tabBtnDashboard.addEventListener('click', function () { switchTab('dashboard') })
 els.tabBtnManage.addEventListener('click', function () { switchTab('manage') })
 els.btnLogin.addEventListener('click', handleLogin)
@@ -234,6 +243,9 @@ async function handleReset() {
     els.absentTeacher.value = ''
     els.leaveDay.value = ''
     els.leaveDate.value = ''
+    els.leaveType.value = ''
+    els.leaveTypeOther.value = ''
+    els.leaveTypeOtherWrap.style.display = 'none'
     els.assignmentList.innerHTML = ''
     els.resultArea.style.display = 'none'
     els.saveBtn.disabled = true
@@ -297,7 +309,7 @@ function renderAssignments(result) {
     note.className = 'teacher-option-note'
     note.textContent = row.availableTeachers.length
       ? 'รายชื่อเรียงจากจำนวนคาบสอนในวันนั้นน้อยไปมาก แล้วตามด้วยจำนวนสอนแทนสะสม'
-      : 'คาบนี้ไม่มีครูว่างตามเงื่อนไขไม่มีสอนและไม่มีเวร'
+      : 'คาบนี้ไม่มีครูว่างตามเงื่อนไขไม่มีสอน ไม่มีเวร และไม่ติดนิเทศ'
 
     fieldWrap.appendChild(lessonDetail)
     fieldWrap.appendChild(select)
@@ -327,7 +339,8 @@ async function handleSave() {
   }
 
   const lines = assignments.map(function (a) { return '• ' + a.period + ' → ' + a.substituteTeacher }).join('\n')
-  if (!confirm('ยืนยันการบันทึกและอัปเดตสถิติ?\n\nครูที่ลา: ' + els.absentTeacher.value + '\nวัน: ' + els.leaveDay.value + '\n\n' + lines)) return
+  const leaveType = getLeaveType()
+  if (!confirm('ยืนยันการบันทึกและอัปเดตสถิติ?\n\nครูที่ลา: ' + els.absentTeacher.value + '\nประเภทการลา: ' + (leaveType || '-') + '\nวัน: ' + els.leaveDay.value + '\n\n' + lines)) return
 
   setLoading(true, 'กำลังบันทึกสถิติ')
   try {
@@ -335,6 +348,7 @@ async function handleSave() {
       absentTeacher: els.absentTeacher.value,
       day: els.leaveDay.value,
       leaveDate: els.leaveDate.value,
+      leaveType: leaveType,
       assignments: assignments
     })
     state.stats = response.stats || state.stats
@@ -355,8 +369,14 @@ function getAssignments() {
     .filter(function (item) { return item.substituteTeacher })
 }
 
+function getLeaveType() {
+  if (els.leaveType.value === 'อื่นๆ') return els.leaveTypeOther.value.trim()
+  return els.leaveType.value
+}
+
 function updateSummaryFromInputs() {
   els.summaryTeacher.textContent = els.absentTeacher.value || '-'
+  els.summaryLeaveType.textContent = getLeaveType() || '-'
   els.summaryDay.textContent = els.leaveDay.value || '-'
   els.summaryDate.textContent = formatThaiDate(els.leaveDate.value) || '-'
   els.captureTimestamp.textContent = 'จัดทำเมื่อ ' + formatDateTime(new Date())
@@ -513,7 +533,7 @@ async function getInitialData() {
 }
 
 async function findSubstituteTeachers(absentTeacher, day) {
-  const [absentSnap, allTeachersSnap, daySchedulesSnap, dayDutiesSnap] = await Promise.all([
+  const [absentSnap, allTeachersSnap, daySchedulesSnap, dayDutiesSnap, daySupervisionsSnap] = await Promise.all([
     getDocs(query(
       collection(db, 'schedules'),
       where('teacher_name', '==', absentTeacher),
@@ -521,7 +541,8 @@ async function findSubstituteTeachers(absentTeacher, day) {
     )),
     getDocs(collection(db, 'teachers')),
     getDocs(query(collection(db, 'schedules'), where('day_of_week', '==', day))),
-    getDocs(query(collection(db, 'duties'), where('day_of_week', '==', day)))
+    getDocs(query(collection(db, 'duties'), where('day_of_week', '==', day))),
+    getDocs(query(collection(db, 'supervisions'), where('day_of_week', '==', day)))
   ])
 
   const absentPeriodsData = absentSnap.docs.map(d => d.data())
@@ -532,6 +553,7 @@ async function findSubstituteTeachers(absentTeacher, day) {
   const allTeachers = allTeachersSnap.docs.map(d => d.data())
   const allSchedules = daySchedulesSnap.docs.map(d => d.data())
   const allDuties = dayDutiesSnap.docs.map(d => d.data())
+  const allSupervisions = daySupervisionsSnap.docs.map(d => d.data())
 
   const absentPeriods = absentPeriodsData.map(p => p.period).sort((a, b) => {
     const numA = parseInt(a.replace('คาบ ', '')) || 0
@@ -548,7 +570,8 @@ async function findSubstituteTeachers(absentTeacher, day) {
       .filter(t => {
         const hasSchedule = allSchedules.some(s => s.teacher_name === t.name && s.period === period)
         const hasDuty = allDuties.some(d => d.teacher_name === t.name && d.period === period)
-        return !hasSchedule && !hasDuty
+        const hasSupervision = allSupervisions.some(s => s.teacher_name === t.name && s.period === period)
+        return !hasSchedule && !hasDuty && !hasSupervision
       })
       .map(t => {
         const dailyTeachingCount = allSchedules.filter(s => s.teacher_name === t.name).length
@@ -592,7 +615,7 @@ async function findSubstituteTeachers(absentTeacher, day) {
 }
 
 async function saveAssignments(payload) {
-  const { absentTeacher, day, leaveDate, assignments } = payload
+  const { absentTeacher, day, leaveDate, leaveType, assignments } = payload
   const batch = writeBatch(db)
 
   for (const assignment of assignments) {
@@ -600,6 +623,7 @@ async function saveAssignments(payload) {
     batch.set(ref, {
       date: leaveDate,
       day_of_week: day,
+      leave_type: leaveType || '',
       period: assignment.period,
       absent_teacher_name: absentTeacher,
       substitute_teacher_name: assignment.substituteTeacher,

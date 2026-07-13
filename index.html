@@ -104,6 +104,23 @@
             <label for="leaveDate">วันที่ลา</label>
             <input class="field" id="leaveDate" type="date">
           </div>
+
+          <div>
+            <label for="leaveType">ประเภทการลา</label>
+            <select class="field" id="leaveType">
+              <option value="">เลือกประเภทการลา</option>
+              <option value="ลาป่วย">ลาป่วย</option>
+              <option value="ลากิจ">ลากิจ</option>
+              <option value="ลาไปราชการ">ลาไปราชการ</option>
+              <option value="กิจกรรม">กิจกรรม</option>
+              <option value="อื่นๆ">อื่นๆ (ระบุเอง)</option>
+            </select>
+          </div>
+
+          <div id="leaveTypeOtherWrap" style="display:none;">
+            <label for="leaveTypeOther">ระบุประเภทการลา</label>
+            <input class="field" id="leaveTypeOther" type="text" placeholder="กรอกประเภทการลา">
+          </div>
         </div>
 
         <div class="button-row">
@@ -137,6 +154,10 @@
               <div class="summary-item">
                 <div class="summary-label">ครูที่ลา</div>
                 <div class="summary-value" id="summaryTeacher">-</div>
+              </div>
+              <div class="summary-item">
+                <div class="summary-label">ประเภทการลา</div>
+                <div class="summary-value" id="summaryLeaveType">-</div>
               </div>
               <div class="summary-item">
                 <div class="summary-label">วัน</div>
